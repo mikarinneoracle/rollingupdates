@@ -1,0 +1,37 @@
+<blockquote>
+  This example shows how to do rolling updates on containers in OCCS
+</blockquote>
+<p>
+<h2>Containers</h2>
+
+<p>
+Deployment: <b>{{ deployment }}</b><br>
+Key: <b>{{ key }}</b>
+<p>
+
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>State</th>
+      <th>&nbsp;</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="container in containers">
+      <td> {{ container.name }} </td>
+      <td> {{ container.state }} </td>
+      <td>
+          <div ng-if="container.state == 'Running'">
+            <a ng-href="#/{{ container.id }}"><button class="btn btn-success">Redeploy</button> </a>
+          </div>
+          <div ng-if="container.state != 'Running'">
+            <button class="btn btn-warning">Wait..</button>
+          </div>
+      </td>
+    </tr>
+		<tr ng-if="containers.length === 0">
+			<td><strong>No containers found</strong></td>
+		</tr>
+  </tbody>
+</table>
