@@ -3,10 +3,14 @@
 </blockquote>
 <p>
 <h2>Containers</h2>
+<br>
 
 <p>
-Deployment: <b>{{ deployment }}</b><br>
-Key: <b>{{ key }}</b>
+<form class="form-inline" ng-submit="filter(key)" ng-controller="rollingUpdatesController">
+  <label for="key">Filter by</label>
+  <input class="form-control" type="text" id="key" ng-model="key" name="key">
+  <button class="btn btn-success" type="submit" value="select">Filter</button>
+</form>
 <p>
 
 <table class="table table-hover">

@@ -1,0 +1,24 @@
+<blockquote>
+  This example shows how to do rolling updates on containers in OCCS
+</blockquote>
+<p>
+<h2>Setup</h2>
+<br>
+Start with setting up the environment
+
+<p>
+<form class="form-inline" ng-submit="setup(data)" ng-controller="rollingUpdatesController">
+  <div>
+    <label for="Host">Host</label>
+    <input class="form-control" type="text" id="host" ng-model="data.host" name="host">
+  </div>
+  <br>
+  <div>
+    <label for="Host">Bearer</label>
+    <input class="form-control" type="text" id="bearer" ng-model="data.bearer" name="bearer">
+  </div>
+  <p>
+  <br>
+  <button class="btn btn-success" type="submit" value="setup"> OK </button>
+</form>
+<p>
