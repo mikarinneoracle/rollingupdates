@@ -15,11 +15,11 @@ var app = angular
       })
       .when('/containers', {
         templateUrl: '../views/containers.html',
-        controller: 'rollingUpdatesController'
+        controller: 'rollingUpdatesContainerController'
       })
       .when('/:id', {
         templateUrl: '../views/redeploy.html',
-        controller: 'rollingUpdatesController'
+        controller: 'rollingUpdatesContainerController'
       })
       .otherwise({
         redirectTo: '/'
