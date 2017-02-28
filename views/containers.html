@@ -4,6 +4,9 @@
 <p>
 <h2>Containers</h2>
 <br>
+Deployment: <b>{{ deployment }}</b>
+<br>
+<br>
 
 <p>
 <form class="form-inline" ng-submit="filter(key)" ng-controller="rollingUpdatesController">
@@ -12,6 +15,20 @@
   <button class="btn btn-success" type="submit" value="select">Filter</button>
 </form>
 <p>
+
+<br>
+
+<div ng-if="containers.length > 0">
+  <span ng-if="allContainersOk && !recycledContainer">
+    <form ng-submit="recycle(containers)" ng-controller="rollingUpdatesController" class="form-horizontal" role="form">
+      <button class="btn btn-success" type="submit" value="recycle">Redeploy all {{ key }} ({{ containers.length }})</button>
+    </form>
+  </span>
+  <div ng-if="!allContainersOk || recycledContainer" class="alert alert-danger" role="alert">
+    Redeploying .. please wait ..
+  </div>
+</div>
+<br>
 
 <table class="table table-hover">
   <thead>

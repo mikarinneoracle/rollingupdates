@@ -14,12 +14,13 @@ app.controller('rollingUpdatesContainerController', function($location, $http, $
 			$http.get('/containers/' + $rootScope.host + '/' + $rootScope.bearer + '/' + $rootScope.deployment + '/' + key).success(function(response, err) {
 				$scope.containers = response['containers'];
 				$scope.deployment = $rootScope.deployment;
-				console.log("Reloading at 3000ms");
+				$scope.allContainersOk = response['allContainersOK'];
+				console.log("Reloading at 1000ms");
 				if($rootScope.interval)
 				{
 					$interval.cancel($rootScope.interval); // Kill the existing reloader before creating a new one if exists
 				}
-				$rootScope.interval = $interval( function(){ $scope.callAtInterval($http, $rootScope); }, 3000);
+				$rootScope.interval = $interval( function(){ $scope.callAtInterval($http, $rootScope); }, 1000);
 			});
 		} else {
 			var location = '/';
@@ -46,6 +47,7 @@ app.controller('rollingUpdatesContainerController', function($location, $http, $
 		$http.get('/containers/' + $rootScope.host + '/' + $rootScope.bearer + '/' + $rootScope.deployment + '/' + key).success(function(response, err) {
 			$scope.containers = response['containers'];
 			$scope.deployment = $rootScope.deployment;
+			$scope.allContainersOk = response['allContainersOK'];
 		});
   }
 

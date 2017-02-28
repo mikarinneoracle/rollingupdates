@@ -59,6 +59,7 @@ app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
   var bearer = req.params.bearer;
   var deployment = req.params.deployment;
   var key = req.params.key;
+  var allContainersOK = true;
   var getContainers = {
     url: host + '/api/v2/deployments/' + deployment + '/containers/',
     method: 'GET',
@@ -80,6 +81,10 @@ app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
               obj.name = containers[i].container_name;
               obj.id = containers[i].container_id;
               obj.state= containers[i].state;
+              if(obj.state != 'Running')
+              {
+                allContainersOK = false;
+              }
               if(key == '*')
               {
                 selectedContainers.push(obj);
@@ -91,6 +96,7 @@ app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
 				}
         var response = {};
         response.containers = selectedContainers;
+        response.allContainersOK = allContainersOK;
         res.send(JSON.stringify(response));
 		}
 		if(error)
