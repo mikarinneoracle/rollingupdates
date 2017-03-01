@@ -7,8 +7,6 @@ var username = process.env.USER || 'demo';
 var password = process.env.PASS || 'demo';
 var app = express();
 
-module.exports = app;
-
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
