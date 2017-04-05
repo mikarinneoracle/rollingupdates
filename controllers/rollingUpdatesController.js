@@ -1,5 +1,9 @@
 app.controller('rollingUpdatesController', function($location, $http, $rootScope, $scope, $routeParams, $interval, $timeout)
 {
+	if(!$rootScope.haproxybackend)
+	{
+		$rootScope.haproxybackend = 'nginx_80';
+	}
 	if($location.path() == '/deployments')
 	{
 		if($rootScope.host && $rootScope.bearer)
@@ -21,6 +25,12 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 
 	$scope.filter = function(key) {
 		$rootScope.key = key;
+		console.log($rootScope.key);
+	}
+
+	$scope.setbackend = function(haproxybackend) {
+		$rootScope.haproxybackend = haproxybackend;
+		console.log($rootScope.haproxybackend);
 	}
 
 	$scope.recycle = function(containers) {
@@ -42,9 +52,13 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 			{
 				console.log("Recycling first container");
 				var id = $rootScope.recycleContainers[0].id;
-				$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + id).success(function(response, err) {
-					$rootScope.recycledContainer = id;
-					$rootScope.recycleContainers.shift();
+				$http.get('/haproxy/disable/' + $rootScope.haproxybackend + '/' + id).success(function(response, err) {
+					console.log(response);
+					console.log("Kill " + id);
+					$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + id).success(function(response, err) {
+						$rootScope.recycledContainer = id;
+						$rootScope.recycleContainers.shift();
+					});
 				});
 			} else {
 				var key;
@@ -72,9 +86,13 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 					{
 						console.log("ALL BACK RUNNING, recycling next ...");
 						var id = $rootScope.recycleContainers[0].id;
-						$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + id).success(function(response, err) {
-							$rootScope.recycledContainer = id;
-							$rootScope.recycleContainers.shift();
+						$http.get('/haproxy/disable/' + $rootScope.haproxybackend + '/' + id).success(function(response, err) {
+							console.log(response);
+							console.log("Kill " + id);
+							$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + id).success(function(response, err) {
+								$rootScope.recycledContainer = id;
+								$rootScope.recycleContainers.shift();
+							});
 						});
 					}
 				});

@@ -2,9 +2,11 @@ var request = require('request');
 var express = require('express');
 var bodyParser = require('body-parser');
 var auth = require('basic-auth');
+var exec = require('child_process').exec;
 var port = process.env.PORT || process.env.npm_package_config_port;
 var username = process.env.USER || 'demo';
 var password = process.env.PASS || 'demo';
+var haproxyurl = process.env.HAPROXY_URL || '';
 var app = express();
 
 app.use(bodyParser.json());
@@ -76,7 +78,12 @@ app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
             var containers = data.containers;
             for(var i = 0; i < containers.length; i++) {
               var obj = {};
+              //console.log(containers[i]);
               obj.name = containers[i].container_name;
+              if(obj.name[0] != '/')
+              {
+                obj.name = '/' + obj.name;
+              }
               obj.id = containers[i].container_id;
               obj.state= containers[i].state;
               if(obj.state != 'Running')
@@ -105,10 +112,69 @@ app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
   });
 });
 
+app.get('/haproxy/info', function(req, res) {
+  exec('echo "show servers state nginx_80" | /usr/bin/nc -U /tmp/haproxy',
+    function (error, stdout, stderr) {
+      console.log('stdout: ' + stdout);
+      console.log('stderr: ' + stderr);
+      if (error !== null) {
+        console.log('exec error: ' + error);
+        res.send({ "error": error });
+      } else {
+        res.send({ "stdout": stdout, "stderr": stderr });
+      }
+  });
+});
+
+app.get('/haproxy/htmlinfo', function(req, res) {
+  if(haproxyurl)
+  {
+    var auth = new Buffer('occsdemo' + ':' + 'occspass').toString('base64');
+    var getHaproxy = {
+      url: haproxyurl,
+      method: 'GET',
+      headers: {
+        Authorization: 'Basic ' + auth
+      }
+  	}
+    request(getHaproxy, function (error, response, body) {
+      if(error || body.indexOf("302") != -1)
+      {
+        return res.status(302).json( { 'error' : error });
+      } else {
+        res.send( body );
+      }
+    });
+  } else {
+    res.send('');
+  }
+});
+
+app.get('/haproxy/:oper/:name/:serverId', function(req, res) {
+  var backendName = req.params.name;
+  var serverId = req.params.serverId;
+  var oper = req.params.oper;
+  var cmd = 'echo "' + oper + ' server ' + backendName + '/' + serverId + '"  | /usr/bin/nc -U /tmp/haproxy';
+  console.log("HAPROXY " + oper + ' ' + serverId);
+  console.log(cmd);
+  exec(cmd,
+    function (error, stdout, stderr) {
+      console.log('stdout: ' + stdout);
+      console.log('stderr: ' + stderr);
+      if (error !== null) {
+        console.log('exec error: ' + error);
+        res.send({ "error": error });
+      } else {
+        res.send({ "stdout": stdout, "stderr": stderr });
+      }
+  });
+});
+
 app.get('/kill/:host/:bearer/:id', function(req, res) {
   var host = 'https://' + req.params.host;
   var bearer = req.params.bearer;
   var id = req.params.id;
+  console.log("KILL " + id);
   var killContainer = {
     url: host + '/api/v2/containers/' + id + '/kill',
     method: 'POST',

@@ -1,4 +1,4 @@
-app.controller('rollingUpdatesContainerController', function($location, $http, $rootScope, $scope, $routeParams, $interval, $timeout)
+app.controller('rollingUpdatesContainerController', function($location, $http, $rootScope, $scope, $routeParams, $interval, $timeout, $sce)
 {
 	if($location.path() == '/containers')
 	{
@@ -30,8 +30,12 @@ app.controller('rollingUpdatesContainerController', function($location, $http, $
 
 	if ($routeParams.id) {
 			$interval.cancel($rootScope.interval); // Kill the existing reloader before creating a new one
-			$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + $routeParams.id).success(function(response, err) {
-				$timeout( function(){ $scope.reloadAndRedirect($location); }, 2000);
+			$http.get('/haproxy/disable/' + $rootScope.haproxybackend + '/' + $routeParams.id).success(function(response, err) {
+				console.log(response);
+				console.log("Kill " + $routeParams.id);
+				$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + $routeParams.id).success(function(response, err) {
+					$timeout( function(){ $scope.reloadAndRedirect($location); }, 2000);
+				});
 			});
 	}
 
@@ -44,6 +48,17 @@ app.controller('rollingUpdatesContainerController', function($location, $http, $
 		} else {
 			key = $rootScope.key;
 		}
+		/*
+		$http.get('/haproxy/info').success(function(response, err) {
+			//console.log(response.error);
+			//console.log(response.stdout);
+			//console.log(response.stderr);
+			$scope.haproxy = response.stdout;
+		});
+		*/
+		$http.get('/haproxy/htmlinfo').success(function(response, err) {
+			$scope.haproxy = $sce.trustAsHtml(response);
+		});
 		$http.get('/containers/' + $rootScope.host + '/' + $rootScope.bearer + '/' + $rootScope.deployment + '/' + key).success(function(response, err) {
 			$scope.containers = response['containers'];
 			$scope.deployment = $rootScope.deployment;

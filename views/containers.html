@@ -17,6 +17,12 @@ Deployment: <b>{{ deployment }}</b>
   <button class="btn btn-success" type="submit" value="select">Filter</button>
 </form>
 <p>
+<form class="form-inline" ng-submit="setbackend(haproxybackend)" ng-controller="rollingUpdatesController">
+  <label for="haproxybackend">HAProxy backend name</label>
+  <input class="form-control" type="text" id="haproxybackend" ng-model="haproxybackend" name="haproxybackend">
+  <button class="btn btn-success" type="submit" value="setbackend">Set</button>
+</form>
+<p>
 
 <br>
 
@@ -32,17 +38,22 @@ Deployment: <b>{{ deployment }}</b>
 </div>
 <br>
 
+<div ng-bind-html="haproxy" ng-if="haproxy">
+</div>
+
 <table class="table table-hover">
   <thead>
     <tr>
       <th>Name</th>
+      <th>ID</th>
       <th>State</th>
       <th>&nbsp;</th>
     </tr>
   </thead>
   <tbody>
-    <tr ng-repeat="container in containers">
+    <tr ng-repeat="container in containers | orderBy:'name'">
       <td> {{ container.name }} </td>
+      <td> {{ container.id }} </td>
       <td> {{ container.state }} </td>
       <td>
           <div ng-if="container.state == 'Running'">
