@@ -31,8 +31,10 @@ app.controller('rollingUpdatesContainerController', function($location, $http, $
 	if ($routeParams.id) {
 			$interval.cancel($rootScope.interval); // Kill the existing reloader before creating a new one
 			$http.get('/haproxy/disable/' + $rootScope.haproxybackend + '/' + $routeParams.id).success(function(response, err) {
-				console.log(response);
-				console.log("Kill " + $routeParams.id);
+				if(response.error)
+				{
+					$rootScope.haproxyerror = response.error.cmd;
+				}
 				$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + $routeParams.id).success(function(response, err) {
 					$timeout( function(){ $scope.reloadAndRedirect($location); }, 2000);
 				});

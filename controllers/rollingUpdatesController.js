@@ -85,17 +85,39 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 					}
 					if(allOk)
 					{
-						console.log("ALL BACK RUNNING, recycling next ...");
-						var id = $rootScope.recycleContainers[0].id;
-						$http.get('/haproxy/disable/' + $rootScope.haproxybackend + '/' + id).success(function(response, err) {
-							if(response.error)
+						var doContinue = true;
+						$http.get('/haproxy/htmlinfo').success(function(response, err) {
+							if(response)
 							{
-								$rootScope.haproxyerror = response.error.cmd;
+								for(var i = 0; i < containers.length; i++) {
+									if(response.indexOf(containers[i].id) == -1)
+									{
+										doContinue = false;
+										console.log(containers[i].id + ' was not found from haproxy info .. awaiting .. ');
+									} else {
+										console.log(containers[i].id + ' found in haproxy data');
+									}
+								}
+							} else {
+								console.log('haproxy info returned invalid reponse');
+								console.log(response);
 							}
-							$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + id).success(function(response, err) {
-								$rootScope.recycledContainer = id;
-								$rootScope.recycleContainers.shift();
-							});
+							console.log('Continue recycling: ' + doContinue);
+							if(doContinue)
+							{
+								console.log("ALL BACK RUNNING, recycling next ...");
+								var id = $rootScope.recycleContainers[0].id;
+								$http.get('/haproxy/disable/' + $rootScope.haproxybackend + '/' + id).success(function(response, err) {
+									if(response.error)
+									{
+										$rootScope.haproxyerror = response.error.cmd;
+									}
+									$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + id).success(function(response, err) {
+										$rootScope.recycledContainer = id;
+										$rootScope.recycleContainers.shift();
+									});
+								});
+							}
 						});
 					}
 				});
