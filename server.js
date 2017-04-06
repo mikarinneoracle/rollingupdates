@@ -138,12 +138,21 @@ app.get('/haproxy/htmlinfo', function(req, res) {
       }
   	}
     request(getHaproxy, function (error, response, body) {
-      if(error || body.indexOf("302") != -1)
+      var content = "";
+      if(body)
       {
-        return res.status(302).json( { 'error' : error });
-      } else {
-        res.send( body );
+        var rows = body.split('\n');
+        content += rows[4];
+        for(var i=11; i < 67; i++)
+        {
+          content += rows[i];
+        }
+        for(var i=109; i < 119; i++)
+        {
+          content += rows[i];
+        }
       }
+      res.send( content );
     });
   } else {
     res.send('');

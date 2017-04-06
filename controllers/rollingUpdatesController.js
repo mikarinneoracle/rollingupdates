@@ -34,6 +34,7 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 	}
 
 	$scope.recycle = function(containers) {
+		$rootScope.haproxyerror = "";
 		if($rootScope.recycle)
 		{
 			$interval.cancel($rootScope.recycle); // Kill the existing reloader before creating a new one if exists
@@ -53,8 +54,10 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 				console.log("Recycling first container");
 				var id = $rootScope.recycleContainers[0].id;
 				$http.get('/haproxy/disable/' + $rootScope.haproxybackend + '/' + id).success(function(response, err) {
-					console.log(response);
-					console.log("Kill " + id);
+					if(response.error)
+					{
+						$rootScope.haproxyerror = response.error.cmd;
+					}
 					$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + id).success(function(response, err) {
 						$rootScope.recycledContainer = id;
 						$rootScope.recycleContainers.shift();
@@ -87,8 +90,10 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 						console.log("ALL BACK RUNNING, recycling next ...");
 						var id = $rootScope.recycleContainers[0].id;
 						$http.get('/haproxy/disable/' + $rootScope.haproxybackend + '/' + id).success(function(response, err) {
-							console.log(response);
-							console.log("Kill " + id);
+							if(response.error)
+							{
+								$rootScope.haproxyerror = response.error.cmd;
+							}
 							$http.get('/kill/' + $rootScope.host + '/' + $rootScope.bearer + '/' + id).success(function(response, err) {
 								$rootScope.recycledContainer = id;
 								$rootScope.recycleContainers.shift();
