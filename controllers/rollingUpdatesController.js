@@ -25,12 +25,10 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 
 	$scope.filter = function(key) {
 		$rootScope.key = key;
-		console.log($rootScope.key);
 	}
 
 	$scope.setbackend = function(haproxybackend) {
 		$rootScope.haproxybackend = haproxybackend;
-		console.log($rootScope.haproxybackend);
 	}
 
 	$scope.recycle = function(containers) {
