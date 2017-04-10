@@ -147,7 +147,7 @@ app.get('/haproxy/htmlinfo', function(req, res) {
         {
           content += rows[i];
         }
-        for(var i=109; i < 119; i++)
+        for(var i=109; i < rows.length - 2; i++)
         {
           content += rows[i];
         }
@@ -203,6 +203,90 @@ app.get('/kill/:host/:bearer/:id', function(req, res) {
 				 console.log(error);
 				 res.send({ "error": error });
 		}
+  });
+});
+
+app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
+  var host = 'https://' + req.params.host;
+  var bearer = req.params.bearer;
+  var deployment = req.params.deployment;
+  var qty = req.params.qty;
+  var backendName = req.params.name;
+
+  var getContainers = {
+    url: host + '/api/v2/deployments/' + deployment + '/containers/',
+    method: 'GET',
+    headers: {
+        Authorization: 'Bearer ' + bearer
+    },
+    rejectUnauthorized: false,
+  }
+
+  var postScaling = {
+    url: host + '/api/v2/deployments/' + deployment,
+    method: 'PUT',
+    headers: {
+        Authorization: 'Bearer ' + bearer
+    },
+    rejectUnauthorized: false,
+    body: {
+      "deployment_id":deployment,
+      "desired_state":1,
+      "placement":{ "pool_id" : "default" },
+      "quantities": { "backend" : parseInt(qty) },
+      "subtype":"stack"
+    },
+    json: true
+  }
+  console.log(postScaling);
+  request(getContainers, function (error, response, body) {
+  	if(body)
+  	{
+      var data = JSON.parse(body);
+      var containers = data.containers;
+      var selectedContainers = [];
+      for(var i = 0; i < containers.length; i++) {
+        var obj = {};
+        obj.name = containers[i].container_name;
+        if(obj.name[0] != '/')
+        {
+          obj.name = '/' + obj.name;
+        }
+        obj.id = containers[i].container_id;
+        obj.state= containers[i].state;
+        if(obj.name.indexOf('backend') !== -1)
+        {
+          selectedContainers.push(obj);
+        }
+      }
+      if(selectedContainers.length > qty)
+      {
+        console.log("NEED TO MANIPULATE HAPOXY " + selectedContainers.length + " > " + qty);
+        for(var i = selectedContainers.length -1; i > qty - 1; i--) {
+          console.log(selectedContainers[i].name + " " + selectedContainers[i].id);
+          var oper = 'disable';
+          var cmd = 'echo "' + oper + ' server ' + backendName + '/' + selectedContainers[i].id + '"  | /usr/bin/nc -U /tmp/haproxy';
+          console.log("HAPROXY " + oper + ' ' + selectedContainers[i].id);
+          console.log(cmd);
+          exec(cmd,
+            function (error, stdout, stderr) {
+              console.log('error: ' + error);
+              console.log('stdout: ' + stdout);
+              console.log('stderr: ' + stderr);
+          });
+        }
+      }
+      request(postScaling, function (error, response, body) {
+        if(body.deployment.quantities)
+        {
+          console.log(body.deployment.quantities);
+          res.send({ 'qty' : body.deployment.quantities });
+        } else {
+          console.log('error');
+          res.status(302).json( { 'error' : body });
+        }
+      });
+    }
   });
 });
 

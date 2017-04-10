@@ -132,4 +132,16 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 		$location.path(location);
 	}
 
+	$scope.scale = function(data) {
+		if($rootScope.host && $rootScope.bearer && $rootScope.deployment)
+		{
+			var name = $rootScope.haproxybackend;
+			$http.get('/scale/' + $rootScope.host + '/' + $rootScope.bearer + '/' + $rootScope.deployment + '/' + data.qty + '/' + name).success(function(response, err) {
+				console.log(response.qty);
+				$rootScope.scaling = JSON.stringify(response.qty);
+				$rootScope.scalingCounter = 1;
+			});
+		}
+	}
+
 });

@@ -65,6 +65,15 @@ app.controller('rollingUpdatesContainerController', function($location, $http, $
 			$scope.containers = response['containers'];
 			$scope.deployment = $rootScope.deployment;
 			$scope.allContainersOk = response['allContainersOK'];
+			if($rootScope.scalingCounter)
+			{
+					$rootScope.scalingCounter++;
+					if($rootScope.scalingCounter > 10)
+					{
+							$rootScope.scaling = "";
+							$rootScope.scalingCounter = 0;
+					}
+			}
 		});
   }
 

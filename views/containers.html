@@ -11,18 +11,27 @@ Deployment: <b>{{ deployment }}</b>
 <br>
 
 <p>
-<form class="form-inline" ng-submit="filter(key)" ng-controller="rollingUpdatesController">
-  <label for="key">Filter by</label>
-  <input class="form-control" type="text" id="key" ng-model="key" name="key">
-  <button class="btn btn-success" type="submit" value="select">Filter</button>
-</form>
-<p>
-<form class="form-inline" ng-submit="setbackend(haproxybackend)" ng-controller="rollingUpdatesController">
-  <label for="haproxybackend">HAProxy backend name</label>
-  <input class="form-control" type="text" id="haproxybackend" ng-model="haproxybackend" name="haproxybackend">
-  <button class="btn btn-success" type="submit" value="setbackend">Set</button>
-</form>
-<p>
+  <div class="col-8">
+  <form class="form-inline" ng-submit="filter(key)" ng-controller="rollingUpdatesController">
+    <label for="key">Filter by</label>
+    <input class="form-control" type="text" id="key" ng-model="key" name="key">
+    <button class="btn btn-success" type="submit" value="select">Filter</button>
+  </form>
+  <p>
+  <form class="form-inline" ng-submit="setbackend(haproxybackend)" ng-controller="rollingUpdatesController">
+    <label for="haproxybackend">HAProxy backend name</label>
+    <input class="form-control" type="text" id="haproxybackend" ng-model="haproxybackend" name="haproxybackend">
+    <button class="btn btn-success" type="submit" value="setbackend">Set</button>
+  </form>
+  <p>
+
+  <form class="form-inline" ng-submit="scale(data)" ng-controller="rollingUpdatesController">
+    <label for="qty">Scale backend Up/Down</label>
+    <input class="form-control" type="text" id="qty" ng-model="data.qty" name="qty">
+    <button class="btn btn-success" type="submit" value="scale">Scale</button>
+  </form>
+  <p>
+</div>
 
 <br>
 
@@ -39,6 +48,12 @@ Deployment: <b>{{ deployment }}</b>
     <div ng-if="haproxyerror" class="alert alert-warning" role="alert">
       HAProxy stats connection for controlling the load balancing not configured or working properly. You can still redeploy.
     </div>
+  </div>
+</div>
+<div ng-if="scaling">
+  <br>
+  <div class="alert alert-info" role="alert">
+    Now scaling to {{ scaling }}
   </div>
 </div>
 
