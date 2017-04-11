@@ -31,14 +31,17 @@ app.get('/deployments/:host/:bearer', function(req, res) {
 				{
 						var data = JSON.parse(body);
             var deployments = data.deployments;
-            for(var i = 0; i < deployments.length; i++) {
-              var obj = {};
-              obj.id = deployments[i].deployment_id;
-              if(deployments[i].stack)
-              {
-                var stack = deployments[i].stack;
-                obj.name = stack.service_name;
-                selectedDeployments.push(obj);
+            if(deployments.length > 0)
+            {
+              for(var i = 0; i < deployments.length; i++) {
+                var obj = {};
+                obj.id = deployments[i].deployment_id;
+                if(deployments[i].stack)
+                {
+                  var stack = deployments[i].stack;
+                  obj.name = stack.service_name;
+                  selectedDeployments.push(obj);
+                }
               }
             }
 				}
@@ -126,7 +129,9 @@ app.get('/haproxy/info', function(req, res) {
   });
 });
 
-app.get('/haproxy/htmlinfo', function(req, res) {
+app.get('/haproxy/htmlinfo/:backend/:rows', function(req, res) {
+  var backendName = req.params.backend;
+  var rowCount = parseInt(req.params.rows);
   if(haproxyurl)
   {
     var auth = new Buffer('occsdemo' + ':' + 'occspass').toString('base64');
@@ -139,17 +144,39 @@ app.get('/haproxy/htmlinfo', function(req, res) {
   	}
     request(getHaproxy, function (error, response, body) {
       var content = "";
+      var i,n;
       if(body)
       {
         var rows = body.split('\n');
-        content += rows[4];
-        for(var i=11; i < 67; i++)
+        var foundRow = -1;
+        for(i=0; i < rows.length; i++)
         {
-          content += rows[i];
+          if(rows[i].indexOf(backendName) > -1)
+          {
+            foundRow = i;
+            n = foundRow + rowCount + 5;
+            break;
+          }
         }
-        for(var i=109; i < rows.length - 2; i++)
+        if(foundRow > -1)
         {
-          content += rows[i];
+          content += rows[4];
+          for(i=11; i < 67; i++)
+          {
+            content += rows[i];
+          }
+          for(i=foundRow - 1; i < n; i++)
+          {
+            content += rows[i];
+          }
+
+          /*
+          for(i=n; i < n+2; i++)
+          {
+            content += rows[i];
+          }
+          */
+
         }
       }
       res.send( content );
@@ -238,7 +265,6 @@ app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
     },
     json: true
   }
-  console.log(postScaling);
   request(getContainers, function (error, response, body) {
   	if(body)
   	{

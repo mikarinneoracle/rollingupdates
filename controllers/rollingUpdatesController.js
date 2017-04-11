@@ -86,7 +86,8 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 					if(allOk)
 					{
 						var doContinue = true;
-						$http.get('/haproxy/htmlinfo').success(function(response, err) {
+						var name = $rootScope.haproxybackend;
+						$http.get('/haproxy/htmlinfo/' + name + '/' + containers.length).success(function(response, err) {
 							if(response)
 							{
 								for(var i = 0; i < containers.length; i++) {

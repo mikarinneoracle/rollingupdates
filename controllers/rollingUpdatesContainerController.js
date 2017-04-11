@@ -58,9 +58,6 @@ app.controller('rollingUpdatesContainerController', function($location, $http, $
 			$scope.haproxy = response.stdout;
 		});
 		*/
-		$http.get('/haproxy/htmlinfo').success(function(response, err) {
-			$scope.haproxy = $sce.trustAsHtml(response);
-		});
 		$http.get('/containers/' + $rootScope.host + '/' + $rootScope.bearer + '/' + $rootScope.deployment + '/' + key).success(function(response, err) {
 			$scope.containers = response['containers'];
 			$scope.deployment = $rootScope.deployment;
@@ -74,6 +71,18 @@ app.controller('rollingUpdatesContainerController', function($location, $http, $
 							$rootScope.scalingCounter = 0;
 					}
 			}
+			var name = $rootScope.haproxybackend;
+			var count = 0;
+			// Filter 'backend's to get counter for HAproxy
+			for(var i = 0; i < $scope.containers.length; i++) {
+				if($scope.containers[i].name.indexOf('backend') > -1)
+				{
+					count++;
+				}
+			}
+			$http.get('/haproxy/htmlinfo/' + name + '/' + count).success(function(response, err) {
+				$scope.haproxy = $sce.trustAsHtml(response);
+			});
 		});
   }
 
