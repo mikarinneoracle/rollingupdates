@@ -3,6 +3,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var auth = require('basic-auth');
 var exec = require('child_process').exec;
+var swaggerJSDoc = require('swagger-jsdoc');
 var port = process.env.PORT || process.env.npm_package_config_port;
 var username = process.env.USER || 'demo';
 var password = process.env.PASS || 'demo';
@@ -12,6 +13,40 @@ var app = express();
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
+/**
+ * @swagger
+ * /deployments/{host}/{bearer}:
+ *   get:
+ *     tags:
+ *       - Deployments
+ *     description: Gets the list of Docker deployments of an OCCS instance
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: host
+ *         description: Admin host ip
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: bearer
+ *         description: Admin's bearer for authentication
+ *         in: path
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: List of deployments.
+ *         schema:
+ *           properties:
+ *            deployments:
+ *              type: array
+ *       500:
+ *         description: Request failed.
+ *         schema:
+ *           properties:
+ *            error:
+ *              type: string
+ */
 app.get('/deployments/:host/:bearer', function(req, res) {
   var host = 'https://' + req.params.host;
   var bearer = req.params.bearer;
@@ -51,12 +86,59 @@ app.get('/deployments/:host/:bearer', function(req, res) {
 		}
 		if(error)
 		{
-				 console.log(error);
-				 res.send({ "error": error });
+			 console.log(error);
+       return res.status(500).json({ "error": error });
 		}
   });
 });
 
+/**
+ * @swagger
+ * /containers/{host}/{bearer}/{deployment}/{key}:
+ *   get:
+ *     tags:
+ *       - Containers
+ *     description: Gets the list of Docker containers of a deployment. Filter by a key, use '*' for all.
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: host
+ *         description: Admin host ip
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: bearer
+ *         description: Admin's bearer for authentication
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: deployment
+ *         description: Id of the deployment
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: key
+ *         description: Key for filtering by name. Use '*' for all.
+ *         in: path
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: List of containers.
+ *         schema:
+ *           properties:
+ *            containers:
+ *              type: array
+ *            allContainersOK:
+ *              type: boolean
+ *              description: Returns true if all containers are in 'running' state, otherwise false.
+ *       500:
+ *         description: Request failed.
+ *         schema:
+ *           properties:
+ *            error:
+ *              type: string
+ */
 app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
   var host = 'https://' + req.params.host;
   var bearer = req.params.bearer;
@@ -93,7 +175,7 @@ app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
               {
                 allContainersOK = false;
               }
-              if(key == '*')
+              if(!key || key == '*')
               {
                 selectedContainers.push(obj);
               } else if(obj.name.indexOf(key) !== -1)
@@ -110,11 +192,36 @@ app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
 		if(error)
 		{
 				 console.log(error);
-				 res.send({ "error": error });
+				 return res.status(500).json({ "error": error });
 		}
   });
 });
 
+/**
+ * @swagger
+ * /haproxy/info:
+ *   get:
+ *     tags:
+ *       - HAproxy info
+ *     description: When properly configured returns HAproxy info via stats.
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: HAProxy stdout and stderr.
+ *         schema:
+ *           properties:
+ *            stdout:
+ *              type: string
+ *            stderr:
+ *              type: string
+ *       500:
+ *         description: Request failed.
+ *         schema:
+ *           properties:
+ *            error:
+ *              type: string
+ */
 app.get('/haproxy/info', function(req, res) {
   exec('echo "show servers state nginx_80" | /usr/bin/nc -U /tmp/haproxy',
     function (error, stdout, stderr) {
@@ -122,73 +229,57 @@ app.get('/haproxy/info', function(req, res) {
       console.log('stderr: ' + stderr);
       if (error !== null) {
         console.log('exec error: ' + error);
-        res.send({ "error": error });
+        return res.status(500).json({ "error": error });
       } else {
         res.send({ "stdout": stdout, "stderr": stderr });
       }
   });
 });
 
-app.get('/haproxy/htmlinfo/:backend/:rows', function(req, res) {
-  var backendName = req.params.backend;
-  var rowCount = parseInt(req.params.rows);
-  if(haproxyurl)
-  {
-    var auth = new Buffer('occsdemo' + ':' + 'occspass').toString('base64');
-    var getHaproxy = {
-      url: haproxyurl,
-      method: 'GET',
-      headers: {
-        Authorization: 'Basic ' + auth
-      }
-  	}
-    request(getHaproxy, function (error, response, body) {
-      var content = "";
-      var i,n;
-      if(body)
-      {
-        var rows = body.split('\n');
-        var foundRow = -1;
-        for(i=0; i < rows.length; i++)
-        {
-          if(rows[i].indexOf(backendName) > -1)
-          {
-            foundRow = i;
-            n = foundRow + rowCount + 5;
-            break;
-          }
-        }
-        if(foundRow > -1)
-        {
-          content += rows[4];
-          for(i=11; i < 67; i++)
-          {
-            content += rows[i];
-          }
-          for(i=foundRow - 1; i < n; i++)
-          {
-            content += rows[i];
-          }
-
-          /*
-          for(i=n; i < n+2; i++)
-          {
-            content += rows[i];
-          }
-          */
-
-        }
-      }
-      res.send( content );
-    });
-  } else {
-    res.send('');
-  }
-});
-
-app.get('/haproxy/:oper/:name/:serverId', function(req, res) {
+/**
+ * @swagger
+ * /haproxy/{oper}/{name}/{server}:
+ *   get:
+ *     tags:
+ *       - HAproxy operation
+ *     description: Executes HAproxy operation for a server.
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: oper
+ *         description: Operation either 'enable or 'disable'
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: name
+ *         description: HAproxy name e.g. nginx_80
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: server
+ *         description: Server id for which the operation is executed. Usually the same as container id when used in a Stack.
+ *         in: path
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: List of containers.
+ *         schema:
+ *           properties:
+ *            stdout:
+ *              type: string
+ *            stderr:
+ *              type: string
+ *       500:
+ *         description: Request failed.
+ *         schema:
+ *           properties:
+ *            error:
+ *              type: string
+ */
+app.get('/haproxy/:oper/:name/:server', function(req, res) {
   var backendName = req.params.name;
-  var serverId = req.params.serverId;
+  var serverId = req.params.server;
   var oper = req.params.oper;
   var cmd = 'echo "' + oper + ' server ' + backendName + '/' + serverId + '"  | /usr/bin/nc -U /tmp/haproxy';
   console.log("HAPROXY " + oper + ' ' + serverId);
@@ -199,17 +290,74 @@ app.get('/haproxy/:oper/:name/:serverId', function(req, res) {
       console.log('stderr: ' + stderr);
       if (error !== null) {
         console.log('exec error: ' + error);
-        res.send({ "error": error });
+        //res.send({ "error": error });
+        return res.status(500).json({ "error": error });
       } else {
         res.send({ "stdout": stdout, "stderr": stderr });
       }
   });
 });
 
-app.get('/kill/:host/:bearer/:id', function(req, res) {
+/**
+ * @swagger
+ * /kill/{host}/{bearer}/{container}/{name}:
+ *   get:
+ *     tags:
+ *       - Recycle container
+ *     description: Recycles a container.
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: host
+ *         description: Admin host ip
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: bearer
+ *         description: Admin's bearer for authentication
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: container
+ *         description: Id of the container to be recycled.
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: name
+ *         description: HAproxy name e.g. nginx_80
+ *         in: path
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: Recycling started succesfully.
+ *         schema:
+ *           properties:
+ *       500:
+ *         description: Request failed.
+ *         schema:
+ *           properties:
+ *            error:
+ *              type: string
+ */
+app.get('/kill/:host/:bearer/:id/:name', function(req, res) {
   var host = 'https://' + req.params.host;
   var bearer = req.params.bearer;
   var id = req.params.id;
+  var backendName = req.params.name;
+  var cmd = 'echo disable server ' + backendName + '/' + id + '"  | /usr/bin/nc -U /tmp/haproxy';
+  console.log("HAPROXY " + oper + ' ' + id);
+  exec(cmd,
+    function (error, stdout, stderr) {
+      console.log('stdout: ' + stdout);
+      console.log('stderr: ' + stderr);
+      if (error !== null) {
+        console.log('exec error: ' + error);
+        return res.status(500).json({ "error": error });
+      } else {
+        res.send({ "stdout": stdout, "stderr": stderr });
+      }
+  });
   console.log("KILL " + id);
   var killContainer = {
     url: host + '/api/v2/containers/' + id + '/kill',
@@ -228,11 +376,61 @@ app.get('/kill/:host/:bearer/:id', function(req, res) {
 		if(error)
 		{
 				 console.log(error);
-				 res.send({ "error": error });
+				 //res.send({ "error": error });
+         return res.status(500).json({ "error": error });
 		}
   });
 });
 
+/**
+ * @swagger
+ * /scale/{host}/{bearer}/{deployment}/{qty}/{name}:
+ *   get:
+ *     tags:
+ *       - Scale deployment
+ *     description: Scales or shrinks a deployment.
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: host
+ *         description: Admin host ip
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: bearer
+ *         description: Admin's bearer for authentication
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: deployment
+ *         description: Id of the deployment to be scaled.
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: qty
+ *         description: Number of containers to be scaled or shrinked to.
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: name
+ *         description: HAProxy name for HAproxy control.
+ *         in: path
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: List of containers and their quantities.
+ *         schema:
+ *           properties:
+ *            qty:
+ *              type: object
+ *       500:
+ *         description: Request failed.
+ *         schema:
+ *           properties:
+ *            error:
+ *              type: string
+ */
 app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
   var host = 'https://' + req.params.host;
   var bearer = req.params.bearer;
@@ -318,4 +516,31 @@ app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
 
 app.listen(port, function() {
   	console.log('server listening on port ' + port);
+});
+
+// swagger definition
+var swaggerDefinition = {
+  info: {
+    title: 'OCCS REST tool Swagger API',
+    version: '1.0.0',
+    description: 'REST APIs for OCCS Rollingupdates tool with Swagger',
+  },
+  basePath: '/',
+};
+
+// options for the swagger docs
+var options = {
+  // import swaggerDefinitions
+  swaggerDefinition: swaggerDefinition,
+  // path to the API docs
+  apis: ['./server.js'],
+};
+
+// initialize swagger-jsdoc
+var swaggerSpec = swaggerJSDoc(options);
+
+// serve swagger
+app.get('/swagger.json', function(req, res) {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
 });
