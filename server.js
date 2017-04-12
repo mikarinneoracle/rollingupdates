@@ -441,9 +441,9 @@ app.listen(port, function() {
 // swagger definition
 var swaggerDefinition = {
   info: {
-    title: 'Swagger / REST tool for OCCS Stacks management with HAproxy',
+    title: 'Swagger UI and REST tool for OCCS Stacks management with HAproxy',
     version: '1.1.0',
-    description: 'Stacks management tool for Oracle Container Cloud Stacks that implement HAproxy',
+    description: 'Stacks management tool for Oracle Container Cloud Stacks that implement HAproxy. Mika Rinne, ORACLE, 2017',
   },
   basePath: '/',
 };
