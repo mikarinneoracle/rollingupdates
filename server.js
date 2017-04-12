@@ -15,111 +15,6 @@ app.use(express.static(__dirname));
 
 /**
  * @swagger
- * /containers/{host}/{bearer}/{deployment}/{key}:
- *   get:
- *     tags:
- *       - Containers
- *     description: Gets the list of Docker containers of a deployment. Filter by a key, use '*' for all.
- *     produces:
- *       - application/json
- *     parameters:
- *       - name: host
- *         description: Admin host ip
- *         in: path
- *         required: true
- *         type: string
- *       - name: bearer
- *         description: Admin's bearer for authentication
- *         in: path
- *         required: true
- *         type: string
- *       - name: deployment
- *         description: Id of the deployment
- *         in: path
- *         required: true
- *         type: string
- *       - name: key
- *         description: Key for filtering by name. Use '*' for all.
- *         in: path
- *         required: true
- *         type: string
- *     responses:
- *       200:
- *         description: List of containers.
- *         schema:
- *           properties:
- *            containers:
- *              type: array
- *            allContainersOK:
- *              type: boolean
- *              description: Returns true if all containers are in 'running' state, otherwise false.
- *       500:
- *         description: Request failed.
- *         schema:
- *           properties:
- *            error:
- *              type: string
- */
-app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
-  var host = 'https://' + req.params.host;
-  var bearer = req.params.bearer;
-  var deployment = req.params.deployment;
-  var key = req.params.key;
-  var allContainersOK = true;
-  var getContainers = {
-    url: host + '/api/v2/deployments/' + deployment + '/containers/',
-    method: 'GET',
-    headers: {
-        Authorization: 'Bearer ' + bearer
-    },
-    rejectUnauthorized: false,
-  }
-  request(getContainers, function (error, response, body) {
-		if(response)
-		{
-        var selectedContainers = [];
-				if(body)
-				{
-						var data = JSON.parse(body);
-            var containers = data.containers;
-            for(var i = 0; i < containers.length; i++) {
-              var obj = {};
-              //console.log(containers[i]);
-              obj.name = containers[i].container_name;
-              if(obj.name[0] != '/')
-              {
-                obj.name = '/' + obj.name;
-              }
-              obj.id = containers[i].container_id;
-              obj.state= containers[i].state;
-              if(obj.state != 'Running')
-              {
-                allContainersOK = false;
-              }
-              if(!key || key == '*')
-              {
-                selectedContainers.push(obj);
-              } else if(obj.name.indexOf(key) !== -1)
-              {
-                selectedContainers.push(obj);
-              }
-            }
-				}
-        var response = {};
-        response.containers = selectedContainers;
-        response.allContainersOK = allContainersOK;
-        res.send(JSON.stringify(response));
-		}
-		if(error)
-		{
-				 console.log(error);
-				 return res.status(500).json({ "error": error });
-		}
-  });
-});
-
-/**
- * @swagger
  * /haproxy/info:
  *   get:
  *     tags:
@@ -268,7 +163,8 @@ app.get('/kill/:host/:bearer/:id/:name', function(req, res) {
   var bearer = req.params.bearer;
   var id = req.params.id;
   var backendName = req.params.name;
-  var cmd = 'echo disable server ' + backendName + '/' + id + '"  | /usr/bin/nc -U /tmp/haproxy';
+  var oper = 'disable';
+  var cmd = 'echo "' + oper + ' server ' + backendName + '/' + id + '"  | /usr/bin/nc -U /tmp/haproxy';
   console.log("HAPROXY disable " + id);
   exec(cmd,
     function (error, stdout, stderr) {
@@ -433,6 +329,111 @@ app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
   });
 });
 
+/**
+ * @swagger
+ * /containers/{host}/{bearer}/{deployment}/{key}:
+ *   get:
+ *     tags:
+ *       - Containers
+ *     description: Gets the list of Docker containers of a deployment. Filter by a key, use '*' for all.
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: host
+ *         description: Admin host ip
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: bearer
+ *         description: Admin's bearer for authentication
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: deployment
+ *         description: Id of the deployment
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: key
+ *         description: Key for filtering by name. Use '*' for all.
+ *         in: path
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: List of containers.
+ *         schema:
+ *           properties:
+ *            containers:
+ *              type: array
+ *            allContainersOK:
+ *              type: boolean
+ *              description: Returns true if all containers are in 'running' state, otherwise false.
+ *       500:
+ *         description: Request failed.
+ *         schema:
+ *           properties:
+ *            error:
+ *              type: string
+ */
+app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
+  var host = 'https://' + req.params.host;
+  var bearer = req.params.bearer;
+  var deployment = req.params.deployment;
+  var key = req.params.key;
+  var allContainersOK = true;
+  var getContainers = {
+    url: host + '/api/v2/deployments/' + deployment + '/containers/',
+    method: 'GET',
+    headers: {
+        Authorization: 'Bearer ' + bearer
+    },
+    rejectUnauthorized: false,
+  }
+  request(getContainers, function (error, response, body) {
+		if(response)
+		{
+        var selectedContainers = [];
+				if(body)
+				{
+						var data = JSON.parse(body);
+            var containers = data.containers;
+            for(var i = 0; i < containers.length; i++) {
+              var obj = {};
+              //console.log(containers[i]);
+              obj.name = containers[i].container_name;
+              if(obj.name[0] != '/')
+              {
+                obj.name = '/' + obj.name;
+              }
+              obj.id = containers[i].container_id;
+              obj.state= containers[i].state;
+              if(obj.state != 'Running')
+              {
+                allContainersOK = false;
+              }
+              if(!key || key == '*')
+              {
+                selectedContainers.push(obj);
+              } else if(obj.name.indexOf(key) !== -1)
+              {
+                selectedContainers.push(obj);
+              }
+            }
+				}
+        var response = {};
+        response.containers = selectedContainers;
+        response.allContainersOK = allContainersOK;
+        res.send(JSON.stringify(response));
+		}
+		if(error)
+		{
+				 console.log(error);
+				 return res.status(500).json({ "error": error });
+		}
+  });
+});
+
 app.listen(port, function() {
   	console.log('server listening on port ' + port);
 });
@@ -440,9 +441,9 @@ app.listen(port, function() {
 // swagger definition
 var swaggerDefinition = {
   info: {
-    title: 'Swagger / REST tool for OCCS stacks with HAproxy',
+    title: 'Swagger / REST tool for OCCS Stacks management with HAproxy',
     version: '1.1.0',
-    description: 'Swagger / REST tool to do management and rollingupdates for OCCS stacks with HAproxy',
+    description: 'Stacks management tool for Oracle Container Cloud Stacks that implement HAproxy',
   },
   basePath: '/',
 };
