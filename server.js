@@ -15,85 +15,6 @@ app.use(express.static(__dirname));
 
 /**
  * @swagger
- * /deployments/{host}/{bearer}:
- *   get:
- *     tags:
- *       - Deployments
- *     description: Gets the list of Docker deployments of an OCCS instance
- *     produces:
- *       - application/json
- *     parameters:
- *       - name: host
- *         description: Admin host ip
- *         in: path
- *         required: true
- *         type: string
- *       - name: bearer
- *         description: Admin's bearer for authentication
- *         in: path
- *         required: true
- *         type: string
- *     responses:
- *       200:
- *         description: List of deployments.
- *         schema:
- *           properties:
- *            deployments:
- *              type: array
- *       500:
- *         description: Request failed.
- *         schema:
- *           properties:
- *            error:
- *              type: string
- */
-app.get('/deployments/:host/:bearer', function(req, res) {
-  var host = 'https://' + req.params.host;
-  var bearer = req.params.bearer;
-  var getDeployments = {
-    url: host + '/api/v2/deployments/',
-    method: 'GET',
-    headers: {
-        Authorization: 'Bearer ' + bearer
-    },
-    rejectUnauthorized: false,
-  }
-  request(getDeployments, function (error, response, body) {
-		if(response)
-		{
-        var selectedDeployments = [];
-				if(body)
-				{
-						var data = JSON.parse(body);
-            var deployments = data.deployments;
-            if(deployments.length > 0)
-            {
-              for(var i = 0; i < deployments.length; i++) {
-                var obj = {};
-                obj.id = deployments[i].deployment_id;
-                if(deployments[i].stack)
-                {
-                  var stack = deployments[i].stack;
-                  obj.name = stack.service_name;
-                  selectedDeployments.push(obj);
-                }
-              }
-            }
-				}
-        var response = {};
-        response.deployments = selectedDeployments;
-        res.send(JSON.stringify(response));
-		}
-		if(error)
-		{
-			 console.log(error);
-       return res.status(500).json({ "error": error });
-		}
-  });
-});
-
-/**
- * @swagger
  * /containers/{host}/{bearer}/{deployment}/{key}:
  *   get:
  *     tags:
@@ -333,6 +254,8 @@ app.get('/haproxy/:oper/:name/:server', function(req, res) {
  *         description: Recycling started succesfully.
  *         schema:
  *           properties:
+ *            status:
+ *              type: string
  *       500:
  *         description: Request failed.
  *         schema:
@@ -346,39 +269,35 @@ app.get('/kill/:host/:bearer/:id/:name', function(req, res) {
   var id = req.params.id;
   var backendName = req.params.name;
   var cmd = 'echo disable server ' + backendName + '/' + id + '"  | /usr/bin/nc -U /tmp/haproxy';
-  console.log("HAPROXY " + oper + ' ' + id);
+  console.log("HAPROXY disable " + id);
   exec(cmd,
     function (error, stdout, stderr) {
       console.log('stdout: ' + stdout);
       console.log('stderr: ' + stderr);
       if (error !== null) {
         console.log('exec error: ' + error);
-        return res.status(500).json({ "error": error });
-      } else {
-        res.send({ "stdout": stdout, "stderr": stderr });
       }
-  });
-  console.log("KILL " + id);
-  var killContainer = {
-    url: host + '/api/v2/containers/' + id + '/kill',
-    method: 'POST',
-    headers: {
-        Authorization: 'Bearer ' + bearer
-    },
-    rejectUnauthorized: false,
-  }
-  request(killContainer, function (error, response, body) {
-		if(response)
-		{
-        var response = {};
-        res.send(JSON.stringify(response));
-		}
-		if(error)
-		{
-				 console.log(error);
-				 //res.send({ "error": error });
-         return res.status(500).json({ "error": error });
-		}
+      console.log("KILL " + id);
+      var killContainer = {
+        url: host + '/api/v2/containers/' + id + '/kill',
+        method: 'POST',
+        headers: {
+            Authorization: 'Bearer ' + bearer
+        },
+        rejectUnauthorized: false,
+      }
+      request(killContainer, function (error, response, body) {
+    		if(response)
+    		{
+            var response = { 'status' : 'OK' };
+            res.send(JSON.stringify(response));
+    		}
+    		if(error)
+    		{
+    				 console.log(error);
+             return res.status(500).json({ "error": error });
+    		}
+      });
   });
 });
 
@@ -521,9 +440,9 @@ app.listen(port, function() {
 // swagger definition
 var swaggerDefinition = {
   info: {
-    title: 'OCCS REST tool Swagger API',
-    version: '1.0.0',
-    description: 'REST APIs for OCCS Rollingupdates tool with Swagger',
+    title: 'Swagger / REST tool for OCCS stacks with HAproxy',
+    version: '1.1.0',
+    description: 'Swagger / REST tool to do management and rollingupdates for OCCS stacks with HAproxy',
   },
   basePath: '/',
 };
