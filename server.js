@@ -203,7 +203,7 @@ app.get('/kill/:host/:bearer/:id/:name', function(req, res) {
  *   get:
  *     tags:
  *       - Scale deployment
- *     description: Scales or shrinks a 'backend's for a deployment.
+ *     description: Scales or shrinks 'backend's for a deployment.
  *     produces:
  *       - application/json
  *     parameters:
