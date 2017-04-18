@@ -5,13 +5,27 @@ var auth = require('basic-auth');
 var exec = require('child_process').exec;
 var swaggerJSDoc = require('swagger-jsdoc');
 var port = process.env.PORT || process.env.npm_package_config_port;
-var username = process.env.USER || 'demo';
-var password = process.env.PASS || 'demo';
+var username = process.env.USER || 'demouser';
+var password = process.env.PASS || 'demopass';
 var haproxyurl = process.env.HAPROXY_URL || '';
+var host = process.env.ADMIN_HOST || '';
+var bearer = process.env.BEARER || '';
 var app = express();
 
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
+
+app.use(function(req, res, next) {
+    var user = auth(req);
+
+    if (user === undefined || user['name'] !== username || user['pass'] !== password) {
+        res.statusCode = 401;
+        res.setHeader('WWW-Authenticate', 'Basic realm="Hastacktool"');
+        res.end('Unauthorized');
+    } else {
+        next();
+    }
+});
 
 /**
  * @swagger
@@ -116,7 +130,7 @@ app.get('/haproxy/:oper/:name/:server', function(req, res) {
 
 /**
  * @swagger
- * /kill/{host}/{bearer}/{container}/{name}:
+ * /kill/{container}/{name}:
  *   get:
  *     tags:
  *       - Recycle container
@@ -124,16 +138,6 @@ app.get('/haproxy/:oper/:name/:server', function(req, res) {
  *     produces:
  *       - application/json
  *     parameters:
- *       - name: host
- *         description: Admin host ip
- *         in: path
- *         required: true
- *         type: string
- *       - name: bearer
- *         description: Admin's bearer for authentication
- *         in: path
- *         required: true
- *         type: string
  *       - name: container
  *         description: Id of the container to be recycled.
  *         in: path
@@ -158,9 +162,7 @@ app.get('/haproxy/:oper/:name/:server', function(req, res) {
  *            error:
  *              type: string
  */
-app.get('/kill/:host/:bearer/:id/:name', function(req, res) {
-  var host = 'https://' + req.params.host;
-  var bearer = req.params.bearer;
+app.get('/kill/:id/:name', function(req, res) {
   var id = req.params.id;
   var backendName = req.params.name;
   var oper = 'disable';
@@ -199,7 +201,7 @@ app.get('/kill/:host/:bearer/:id/:name', function(req, res) {
 
 /**
  * @swagger
- * /scale/{host}/{bearer}/{deployment}/{qty}/{name}:
+ * /scale/{deployment}/{qty}/{name}:
  *   get:
  *     tags:
  *       - Scale deployment
@@ -207,23 +209,13 @@ app.get('/kill/:host/:bearer/:id/:name', function(req, res) {
  *     produces:
  *       - application/json
  *     parameters:
- *       - name: host
- *         description: Admin host ip
- *         in: path
- *         required: true
- *         type: string
- *       - name: bearer
- *         description: Admin's bearer for authentication
- *         in: path
- *         required: true
- *         type: string
  *       - name: deployment
  *         description: Id of the deployment to be scaled.
  *         in: path
  *         required: true
  *         type: string
  *       - name: qty
- *         description: Number of containers to be scaled or shrinked to.
+ *         description: Number of 'backend' containers to be scaled or shrinked to.
  *         in: path
  *         required: true
  *         type: string
@@ -246,9 +238,7 @@ app.get('/kill/:host/:bearer/:id/:name', function(req, res) {
  *            error:
  *              type: string
  */
-app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
-  var host = 'https://' + req.params.host;
-  var bearer = req.params.bearer;
+app.get('/scale/:deployment/:qty/:name', function(req, res) {
   var deployment = req.params.deployment;
   var qty = req.params.qty;
   var backendName = req.params.name;
@@ -331,7 +321,7 @@ app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
 
 /**
  * @swagger
- * /containers/{host}/{bearer}/{deployment}/{key}:
+ * /containers/{deployment}/{key}:
  *   get:
  *     tags:
  *       - Containers
@@ -339,16 +329,6 @@ app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
  *     produces:
  *       - application/json
  *     parameters:
- *       - name: host
- *         description: Admin host ip
- *         in: path
- *         required: true
- *         type: string
- *       - name: bearer
- *         description: Admin's bearer for authentication
- *         in: path
- *         required: true
- *         type: string
  *       - name: deployment
  *         description: Id of the deployment
  *         in: path
@@ -376,7 +356,7 @@ app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
  *            error:
  *              type: string
  */
-app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
+app.get('/containers/:deployment/:key', function(req, res) {
   var host = 'https://' + req.params.host;
   var bearer = req.params.bearer;
   var deployment = req.params.deployment;
@@ -397,30 +377,33 @@ app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
 				if(body)
 				{
 						var data = JSON.parse(body);
-            var containers = data.containers;
-            for(var i = 0; i < containers.length; i++) {
-              var obj = {};
-              //console.log(containers[i]);
-              obj.name = containers[i].container_name;
-              if(obj.name[0] != '/')
-              {
-                obj.name = '/' + obj.name;
+            if(data.containers)
+            {
+              var containers = data.containers;
+              for(var i = 0; i < containers.length; i++) {
+                var obj = {};
+                //console.log(containers[i]);
+                obj.name = containers[i].container_name;
+                if(obj.name[0] != '/')
+                {
+                  obj.name = '/' + obj.name;
+                }
+                obj.id = containers[i].container_id;
+                obj.state= containers[i].state;
+                if(obj.state != 'Running')
+                {
+                  allContainersOK = false;
+                }
+                if(!key || key == '*')
+                {
+                  selectedContainers.push(obj);
+                } else if(obj.name.indexOf(key) !== -1)
+                {
+                  selectedContainers.push(obj);
+                }
               }
-              obj.id = containers[i].container_id;
-              obj.state= containers[i].state;
-              if(obj.state != 'Running')
-              {
-                allContainersOK = false;
-              }
-              if(!key || key == '*')
-              {
-                selectedContainers.push(obj);
-              } else if(obj.name.indexOf(key) !== -1)
-              {
-                selectedContainers.push(obj);
-              }
-            }
-				}
+  				}
+        }
         var response = {};
         response.containers = selectedContainers;
         response.allContainersOK = allContainersOK;
