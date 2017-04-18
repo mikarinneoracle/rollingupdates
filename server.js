@@ -215,7 +215,7 @@ app.get('/kill/:id/:name', function(req, res) {
  *         required: true
  *         type: string
  *       - name: qty
- *         description: Number of 'backend' containers to be scaled or shrinked to.
+ *         description: Number of backend containers to be scaled or shrinked to.
  *         in: path
  *         required: true
  *         type: string
@@ -271,6 +271,7 @@ app.get('/scale/:deployment/:qty/:name', function(req, res) {
   request(getContainers, function (error, response, body) {
   	if(body)
   	{
+      console.log(body);
       var data = JSON.parse(body);
       var containers = data.containers;
       var selectedContainers = [];
@@ -357,8 +358,6 @@ app.get('/scale/:deployment/:qty/:name', function(req, res) {
  *              type: string
  */
 app.get('/containers/:deployment/:key', function(req, res) {
-  var host = 'https://' + req.params.host;
-  var bearer = req.params.bearer;
   var deployment = req.params.deployment;
   var key = req.params.key;
   var allContainersOK = true;
@@ -419,13 +418,15 @@ app.get('/containers/:deployment/:key', function(req, res) {
 
 app.listen(port, function() {
   	console.log('server listening on port ' + port);
+    console.log('admin host ip ' + host);
+    console.log('bearer ' + bearer);
 });
 
 // swagger definition
 var swaggerDefinition = {
   info: {
     title: 'Swagger UI and REST tool for OCCS Stacks management with HAproxy',
-    version: '1.1.0',
+    version: '1.2.0',
     description: 'Stacks management tool for Oracle Container Cloud Stacks that implement HAproxy. Mika Rinne, ORACLE, 2017',
   },
   basePath: '/',
