@@ -12,6 +12,33 @@ var host = process.env.ADMIN_HOST || '';
 var bearer = process.env.BEARER || '';
 var app = express();
 
+// swagger definition
+var swaggerDefinition = {
+  info: {
+    title: 'Swagger UI and REST tool for OCCS Stacks management with HAproxy',
+    version: '1.2.0',
+    description: 'Stacks management tool for Oracle Container Cloud Stacks that implement HAproxy. Mika Rinne, ORACLE, 2017',
+  },
+  basePath: '/',
+};
+
+// options for the swagger docs
+var options = {
+  // import swaggerDefinitions
+  swaggerDefinition: swaggerDefinition,
+  // path to the API docs
+  apis: ['./server.js'],
+};
+
+// initialize swagger-jsdoc
+var swaggerSpec = swaggerJSDoc(options);
+
+// serve swagger
+app.get('/swagger.json', function(req, res) {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
@@ -26,6 +53,7 @@ app.use(function(req, res, next) {
         next();
     }
 });
+
 
 /**
  * @swagger
@@ -420,31 +448,4 @@ app.listen(port, function() {
   	console.log('server listening on port ' + port);
     console.log('admin host ip ' + host);
     console.log('bearer ' + bearer);
-});
-
-// swagger definition
-var swaggerDefinition = {
-  info: {
-    title: 'Swagger UI and REST tool for OCCS Stacks management with HAproxy',
-    version: '1.2.0',
-    description: 'Stacks management tool for Oracle Container Cloud Stacks that implement HAproxy. Mika Rinne, ORACLE, 2017',
-  },
-  basePath: '/',
-};
-
-// options for the swagger docs
-var options = {
-  // import swaggerDefinitions
-  swaggerDefinition: swaggerDefinition,
-  // path to the API docs
-  apis: ['./server.js'],
-};
-
-// initialize swagger-jsdoc
-var swaggerSpec = swaggerJSDoc(options);
-
-// serve swagger
-app.get('/swagger.json', function(req, res) {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
 });
