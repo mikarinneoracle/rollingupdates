@@ -5,8 +5,8 @@ var auth = require('basic-auth');
 var exec = require('child_process').exec;
 var swaggerJSDoc = require('swagger-jsdoc');
 var port = process.env.PORT || process.env.npm_package_config_port;
-var username = process.env.USER || 'demouser';
-var password = process.env.PASS || 'demopass';
+var username = process.env.USER || '';
+var password = process.env.PASS || '';
 var haproxyurl = process.env.HAPROXY_URL || '';
 var host = process.env.ADMIN_HOST || '';
 var bearer = process.env.BEARER || '';
@@ -16,7 +16,7 @@ var app = express();
 var swaggerDefinition = {
   info: {
     title: 'Swagger UI and REST tool for OCCS Stacks management with HAproxy',
-    version: '1.2.0',
+    version: '1.2.1',
     description: 'Stacks management tool for Oracle Container Cloud Stacks that implement HAproxy. Mika Rinne, ORACLE, 2017',
   },
   basePath: '/',
@@ -44,6 +44,11 @@ app.use(express.static(__dirname));
 
 app.use(function(req, res, next) {
     var user = auth(req);
+
+    if(!username || !password)
+    {
+      return res.status(500).json({ "error": "username/password not properly configured." });
+    }
 
     if (user === undefined || user['name'] !== username || user['pass'] !== password) {
         res.statusCode = 401;
@@ -158,7 +163,7 @@ app.get('/haproxy/:oper/:name/:server', function(req, res) {
 
 /**
  * @swagger
- * /kill/{container}/{name}:
+ * /recycle/{container}/{name}:
  *   get:
  *     tags:
  *       - Recycle container
@@ -190,7 +195,7 @@ app.get('/haproxy/:oper/:name/:server', function(req, res) {
  *            error:
  *              type: string
  */
-app.get('/kill/:id/:name', function(req, res) {
+app.get('/recycle/:id/:name', function(req, res) {
   var id = req.params.id;
   var backendName = req.params.name;
   var oper = 'disable';
@@ -448,4 +453,8 @@ app.listen(port, function() {
   	console.log('server listening on port ' + port);
     console.log('admin host ip ' + host);
     console.log('bearer ' + bearer);
+    if(!username || !password)
+    {
+      console.log("Alert: username/password not configured.");
+    }
 });

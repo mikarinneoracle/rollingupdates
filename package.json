@@ -1,6 +1,6 @@
 {
   "name": "rollingupdate",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Swagger / REST tool for OCCS stacks with HAproxy",
   "main": "server.js",
   "scripts": {
