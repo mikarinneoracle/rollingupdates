@@ -16,7 +16,7 @@ var app = express();
 var swaggerDefinition = {
   info: {
     title: 'Swagger UI and REST tool for OCCS Stacks management with HAproxy',
-    version: '1.2.1',
+    version: '1.2.2',
     description: 'Stacks management tool for Oracle Container Cloud Stacks that implement HAproxy. Mika Rinne, ORACLE, 2017',
   },
   basePath: '/',
@@ -101,7 +101,7 @@ app.get('/haproxy/info', function(req, res) {
 
 /**
  * @swagger
- * /haproxy/{oper}/{name}/{server}:
+ * /haproxy/{oper}/{container}/{name}:
  *   get:
  *     tags:
  *       - HAproxy operation
@@ -114,13 +114,13 @@ app.get('/haproxy/info', function(req, res) {
  *         in: path
  *         required: true
  *         type: string
- *       - name: name
- *         description: HAproxy name e.g. nginx_80
+ *       - name: container
+ *         description: Backend container id for which the proxy operation (enable/disable) is executed.
  *         in: path
  *         required: true
  *         type: string
- *       - name: server
- *         description: Server id for which the operation is executed. Usually the same as container id when used in a Stack.
+ *       - name: name
+ *         description: HAproxy name e.g. nginx_80
  *         in: path
  *         required: true
  *         type: string
@@ -140,12 +140,12 @@ app.get('/haproxy/info', function(req, res) {
  *            error:
  *              type: string
  */
-app.get('/haproxy/:oper/:name/:server', function(req, res) {
+app.get('/haproxy/:oper/:id/:name', function(req, res) {
+  var id = req.params.id;
   var backendName = req.params.name;
-  var serverId = req.params.server;
   var oper = req.params.oper;
-  var cmd = 'echo "' + oper + ' server ' + backendName + '/' + serverId + '"  | /usr/bin/nc -U /tmp/haproxy';
-  console.log("HAPROXY " + oper + ' ' + serverId);
+  var cmd = 'echo "' + oper + ' server ' + backendName + '/' + id + '"  | /usr/bin/nc -U /tmp/haproxy';
+  console.log("HAPROXY " + oper + ' ' + id);
   console.log(cmd);
   exec(cmd,
     function (error, stdout, stderr) {
@@ -172,7 +172,7 @@ app.get('/haproxy/:oper/:name/:server', function(req, res) {
  *       - application/json
  *     parameters:
  *       - name: container
- *         description: Id of the container to be recycled.
+ *         description: Backend container id to be recycled.
  *         in: path
  *         required: true
  *         type: string
@@ -359,7 +359,7 @@ app.get('/scale/:deployment/:qty/:name', function(req, res) {
  *   get:
  *     tags:
  *       - Containers
- *     description: Gets the list of Docker containers of a deployment. Filter by a key, use '*' for all.
+ *     description: Gets the list of Docker containers of a deployment. Filter by a key e.g. 'backend', use '*' for all.
  *     produces:
  *       - application/json
  *     parameters:
