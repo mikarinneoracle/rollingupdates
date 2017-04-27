@@ -101,7 +101,7 @@ app.get('/haproxy/info', function(req, res) {
 
 /**
  * @swagger
- * /haproxy/{oper}/{container}/{name}:
+ * /haproxy/{oper}/{name}/{container}:
  *   get:
  *     tags:
  *       - HAproxy operation
@@ -114,13 +114,13 @@ app.get('/haproxy/info', function(req, res) {
  *         in: path
  *         required: true
  *         type: string
- *       - name: container
- *         description: Backend container id for which the proxy operation (enable/disable) is executed.
+ *       - name: name
+ *         description: HAproxy name e.g. nginx_80
  *         in: path
  *         required: true
  *         type: string
- *       - name: name
- *         description: HAproxy name e.g. nginx_80
+ *       - name: container
+ *         description: Backend container id for which the proxy operation (enable/disable) is executed.
  *         in: path
  *         required: true
  *         type: string
@@ -140,9 +140,9 @@ app.get('/haproxy/info', function(req, res) {
  *            error:
  *              type: string
  */
-app.get('/haproxy/:oper/:id/:name', function(req, res) {
-  var id = req.params.id;
+app.get('/haproxy/:oper/:name/:id', function(req, res) {
   var backendName = req.params.name;
+  var id = req.params.id;
   var oper = req.params.oper;
   var cmd = 'echo "' + oper + ' server ' + backendName + '/' + id + '"  | /usr/bin/nc -U /tmp/haproxy';
   console.log("HAPROXY " + oper + ' ' + id);
@@ -163,7 +163,7 @@ app.get('/haproxy/:oper/:id/:name', function(req, res) {
 
 /**
  * @swagger
- * /recycle/{container}/{name}:
+ * /recycle/{name}/{container}:
  *   get:
  *     tags:
  *       - Recycle container
@@ -171,13 +171,13 @@ app.get('/haproxy/:oper/:id/:name', function(req, res) {
  *     produces:
  *       - application/json
  *     parameters:
- *       - name: container
- *         description: Backend container id to be recycled.
+ *       - name: name
+ *         description: HAproxy name e.g. nginx_80
  *         in: path
  *         required: true
  *         type: string
- *       - name: name
- *         description: HAproxy name e.g. nginx_80
+ *       - name: container
+ *         description: Backend container id to be recycled.
  *         in: path
  *         required: true
  *         type: string
@@ -195,9 +195,9 @@ app.get('/haproxy/:oper/:id/:name', function(req, res) {
  *            error:
  *              type: string
  */
-app.get('/recycle/:id/:name', function(req, res) {
-  var id = req.params.id;
+app.get('/recycle/:name/:id', function(req, res) {
   var backendName = req.params.name;
+  var id = req.params.id;
   var oper = 'disable';
   var cmd = 'echo "' + oper + ' server ' + backendName + '/' + id + '"  | /usr/bin/nc -U /tmp/haproxy';
   console.log("HAPROXY disable " + id);
