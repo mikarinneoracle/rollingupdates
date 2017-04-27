@@ -1,11 +1,10 @@
 var request = require('request');
 var express = require('express');
 var bodyParser = require('body-parser');
-var auth = require('basic-auth');
 var exec = require('child_process').exec;
 var port = process.env.PORT || process.env.npm_package_config_port;
-var username = process.env.USER || 'demo';
-var password = process.env.PASS || 'demo';
+var haproxy_username = process.env.HA_USER || 'occsdemo';
+var haproxy_password = process.env.HA_PASS || 'occspass';
 var haproxyurl = process.env.HAPROXY_URL || '';
 var app = express();
 
@@ -134,7 +133,7 @@ app.get('/haproxy/htmlinfo/:backend/:rows', function(req, res) {
   var rowCount = parseInt(req.params.rows);
   if(haproxyurl)
   {
-    var auth = new Buffer('occsdemo' + ':' + 'occspass').toString('base64');
+    var auth = new Buffer(haproxy_username + ':' + haproxy_password).toString('base64');
     var getHaproxy = {
       url: haproxyurl,
       method: 'GET',
@@ -294,11 +293,16 @@ app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
           var cmd = 'echo "' + oper + ' server ' + backendName + '/' + selectedContainers[i].id + '"  | /usr/bin/nc -U /tmp/haproxy';
           console.log("HAPROXY " + oper + ' ' + selectedContainers[i].id);
           console.log(cmd);
+          var proxyStatus = '';
           exec(cmd,
             function (error, stdout, stderr) {
               console.log('error: ' + error);
               console.log('stdout: ' + stdout);
               console.log('stderr: ' + stderr);
+              if(error)
+              {
+                proxyStatus = error;
+              }
           });
         }
       }
@@ -306,7 +310,7 @@ app.get('/scale/:host/:bearer/:deployment/:qty/:name', function(req, res) {
         if(body.deployment.quantities)
         {
           console.log(body.deployment.quantities);
-          res.send({ 'qty' : body.deployment.quantities });
+          res.send({ 'qty' : body.deployment.quantities, 'haproxy' :  proxyStatus });
         } else {
           console.log('error');
           res.status(302).json( { 'error' : body });
