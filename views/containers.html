@@ -47,6 +47,7 @@ Deployment: <b>{{ deployment }}</b>
     </div>
     <div ng-if="haproxyerror" class="alert alert-warning" role="alert">
       HAProxy stats connection for controlling the load balancing not configured or working properly. You can still redeploy/scale.
+      <a href="/#/haproxy"><button type="button" class="btn btn-info">More info</button></a>
     </div>
   </div>
 </div>
@@ -54,6 +55,7 @@ Deployment: <b>{{ deployment }}</b>
   <br>
   <div ng-if="scalinghaproxyerror" class="alert alert-warning" role="alert">
     HAProxy stats connection for controlling the load balancing not configured or working properly. You can still scale.
+    <a href="/#/haproxy"><button type="button" class="btn btn-info">More info</button></a>
   </div>
   <div class="alert alert-info" role="alert">
     Now scaling to {{ scaling }}

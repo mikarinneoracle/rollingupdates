@@ -17,6 +17,10 @@ var app = angular
         templateUrl: '../views/containers.html',
         controller: 'rollingUpdatesContainerController'
       })
+      .when('/haproxy', {
+        templateUrl: '../views/haproxy.html',
+        controller: 'rollingUpdatesController'
+      })
       .when('/:id', {
         templateUrl: '../views/redeploy.html',
         controller: 'rollingUpdatesContainerController'
