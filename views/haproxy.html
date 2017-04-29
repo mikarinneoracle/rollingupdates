@@ -5,17 +5,39 @@ $('html,body').scrollTop(0);
 <h2>Configuring HAproxy Docker for rollingupdates - Instructions</h2>
 <br>
 <ul>
-  <li>Run this tool in the same VM as the stack HAproxy Docker.</li>
-  <li>Configure HAproxy volume for the HAproxy stats socket to share it with this tool:
-    <pre>volumes:
-    - '/tmp:/tmp:rw'</pre>
-  </li>
+  <li>Important: Run this tool in the same VM as the stack HAproxy Docker.</li>
   <li>Install netcat ('nc') utility on the VM. Guidance <a target="swappliance" href="https://github.com/mikarinneoracle/sw-appliance/blob/master/README.md">how to use yum install in OCCS VM here</a>.</li>
   <li>Enable <i>stats socket /tmp/haproxy level admin</i> in the HAproxy config.
   <a target="stats" href="https://github.com/mikarinneoracle/docker-images/blob/master/ContainerCloud/images/haproxy/haproxy.cfg.template_orig#L7">Example here</a>.
   A prebuilt version is here: <a target="prebuilt" href="https://hub.docker.com/r/mikarinneoracle/haproxy/tags/">mikarinneoracle/haproxy:0.7</a>.</li>
+  <li>Configure HAproxy volume for the HAproxy stats socket to share it with this tool:
+    <pre>volumes:
+    - '/tmp:/tmp:rw'</pre>
+  </li>
   <li>Application is encouraged to use sessions and then add session management to HAproxy configuration.
   <a target="sessions" href="https://github.com/mikarinneoracle/docker-images/blob/master/ContainerCloud/images/haproxy/haproxy.cfg.template_orig#L42">Example here</a>.</li>
 </ul>
 <p>
+  <br>
+  <br>
+  <h4>Example YAML for this tool:</h4>
+  <pre>
+    version: 2
+      services:
+      rollingupdate:
+      image: 'mikarinneoracle/rollingupdate:1.0'
+      ports:
+        - '1000:3000/tcp'
+      privileged: true
+      volumes:
+        - '/usr/bin/nc:/usr/bin/nc:rw'
+        - '/tmp:/tmp:rw'
+      environment:
+        - 'HAPROXY_URL=http://129.150.166.12:1936/haproxy?stats'
+        - HA_USER=occsdemo
+        - HA_PASS=occspass
+  </pre>
+  <a target="dockerhub" href="https://hub.docker.com/r/mikarinneoracle/rollingupdate/">Example Docker Hub</>
+  <p>
+  <br>
 <a href="javascript: window.history.back();">Back</a>
