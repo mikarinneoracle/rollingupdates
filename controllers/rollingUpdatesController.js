@@ -4,6 +4,16 @@ app.controller('rollingUpdatesController', function($location, $http, $rootScope
 	{
 		$rootScope.haproxybackend = 'nginx_80';
 	}
+	if($location.path() == '/')
+	{
+		if($rootScope.host && $rootScope.bearer)
+		{
+			var data = {};
+			data.host = $rootScope.host;
+			data.bearer = $rootScope.bearer;
+			$scope.data = data;
+		}
+	}
 	if($location.path() == '/deployments')
 	{
 		if($rootScope.host && $rootScope.bearer)

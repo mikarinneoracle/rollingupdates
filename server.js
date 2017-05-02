@@ -33,6 +33,7 @@ app.get('/deployments/:host/:bearer', function(req, res) {
             if(deployments.length > 0)
             {
               for(var i = 0; i < deployments.length; i++) {
+                console.log(deployments[i]);
                 var obj = {};
                 obj.id = deployments[i].deployment_id;
                 if(deployments[i].stack)
