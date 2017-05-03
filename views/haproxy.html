@@ -1,9 +1,12 @@
 <script>
 $('html,body').scrollTop(0);
 </script>
-
-<h2>Configuring HAproxy Docker for rollingupdates - Instructions</h2>
+<h2>Configuring HAproxy Docker for the rollingupdate tool</h2>
 <br>
+<h3>Installer</h3>
+Use <a target="installer" href="https://github.com/mikarinneoracle/rollingupdateinstall">this installer</a> on a clean OCCS instance/environment. It will install and configure this tool along with a sample application for testing.
+<p>
+<h3>General instructions</h3>
 <ul>
   <li>Important: Run this tool in the same VM as the stack HAproxy Docker.</li>
   <li>Install netcat ('nc') utility on the VM. Guidance <a target="swappliance" href="https://github.com/mikarinneoracle/sw-appliance/blob/master/README.md">how to use yum install in OCCS VM here</a>.</li>
