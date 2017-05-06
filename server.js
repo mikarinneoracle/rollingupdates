@@ -304,7 +304,6 @@ app.get('/scale/:deployment/:qty/:name', function(req, res) {
   request(getContainers, function (error, response, body) {
   	if(body)
   	{
-      console.log(body);
       var data = JSON.parse(body);
       var containers = data.containers;
       var selectedContainers = [];
@@ -451,7 +450,7 @@ app.get('/containers/:deployment/:key', function(req, res) {
 
 app.listen(port, function() {
   	console.log('server listening on port ' + port);
-    console.log('admin host ip ' + host);
+    console.log('admin host ' + host);
     console.log('bearer ' + bearer);
     if(!username || !password)
     {
