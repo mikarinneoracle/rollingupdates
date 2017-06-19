@@ -30,7 +30,7 @@ app.get('/deployments/:host/:bearer', function(req, res) {
 				{
 						var data = JSON.parse(body);
             var deployments = data.deployments;
-            if(deployments.length > 0)
+            if(deployments && deployments.length > 0)
             {
               for(var i = 0; i < deployments.length; i++) {
                 console.log(deployments[i]);
@@ -74,38 +74,41 @@ app.get('/containers/:host/:bearer/:deployment/:key', function(req, res) {
   request(getContainers, function (error, response, body) {
 		if(response)
 		{
-        var selectedContainers = [];
-				if(body)
-				{
-						var data = JSON.parse(body);
-            var containers = data.containers;
-            for(var i = 0; i < containers.length; i++) {
-              var obj = {};
-              //console.log(containers[i]);
-              obj.name = containers[i].container_name;
-              if(obj.name[0] != '/')
-              {
-                obj.name = '/' + obj.name;
-              }
-              obj.id = containers[i].container_id;
-              obj.state= containers[i].state;
-              if(obj.state != 'Running')
-              {
-                allContainersOK = false;
-              }
-              if(key == '*')
-              {
-                selectedContainers.push(obj);
-              } else if(obj.name.indexOf(key) !== -1)
-              {
-                selectedContainers.push(obj);
-              }
-            }
-				}
-        var response = {};
-        response.containers = selectedContainers;
-        response.allContainersOK = allContainersOK;
-        res.send(JSON.stringify(response));
+            var selectedContainers = [];
+    		if(body)
+    		{
+    			var data = JSON.parse(body);
+                var containers = data.containers;
+                if(containers && containers.length > 0)
+                {
+                    for(var i = 0; i < containers.length; i++) {
+                      var obj = {};
+                      //console.log(containers[i]);
+                      obj.name = containers[i].container_name;
+                      if(obj.name[0] != '/')
+                      {
+                        obj.name = '/' + obj.name;
+                      }
+                      obj.id = containers[i].container_id;
+                      obj.state= containers[i].state;
+                      if(obj.state != 'Running')
+                      {
+                        allContainersOK = false;
+                      }
+                      if(key == '*')
+                      {
+                        selectedContainers.push(obj);
+                      } else if(obj.name.indexOf(key) !== -1)
+                      {
+                        selectedContainers.push(obj);
+                      }
+                    }
+                }
+    		}
+            var response = {};
+            response.containers = selectedContainers;
+            response.allContainersOK = allContainersOK;
+            res.send(JSON.stringify(response));
 		}
 		if(error)
 		{
